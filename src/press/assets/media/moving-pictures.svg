@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="1200" viewBox="0 0 880 1200">
+  <rect width="880" height="1200" fill="#e7e7e7"/>
+  <g fill="#272727" font-family="Georgia, serif">
+    <text x="62" y="157" font-size="105" letter-spacing="-5">Moving</text>
+    <text x="62" y="263" font-size="105" letter-spacing="-5">pictures</text>
+  </g>
+  <g fill="none" stroke="#646464" stroke-width="2">
+    <rect x="64" y="365" width="604" height="400"/>
+    <rect x="100" y="401" width="604" height="400"/>
+    <rect x="136" y="437" width="604" height="400"/>
+    <rect x="172" y="473" width="604" height="400"/>
+  </g>
+  <circle cx="474" cy="673" r="96" fill="#787878"/>
+  <path d="M454 631 L454 715 L514 673Z" fill="#e7e7e7"/>
+  <path d="M64 1020H816" stroke="#272727" stroke-width="2"/>
+  <g fill="#272727" font-family="Arial, sans-serif" font-size="20" letter-spacing="3">
+    <text x="64" y="1064">A STUDY IN MOTION</text>
+    <text x="64" y="1140" font-size="14">VOLUME CATALOGUE</text>
+    <text x="816" y="1140" font-size="14" text-anchor="end">FILM / 01</text>
+  </g>
+</svg>

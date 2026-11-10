@@ -1,0 +1,17 @@
+{
+  "name": "press",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1",
+    "build": "astro build",
+    "preview": "astro preview --port 4175 --host 127.0.0.1",
+    "test": "node --test src/press/tests/",
+    "build:press": "make -C src/press/c site"
+  },
+  "dependencies": {
+    "astro": "^7.3.3"
+  }
+}

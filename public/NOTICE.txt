@@ -1,0 +1,14 @@
+ZI3T Volume Catalogue
+---------------------
+Copyright (c) 2026 William (Viet) Nguyen. MIT licence (see LICENSE in the
+source repository), except for the third-party parts listed below.
+
+Stripe Press (https://press.stripe.com/) is a Stripe publishing project. This
+is an independent study and is not affiliated with or endorsed by Stripe.
+
+Third-party code in ./viewer/
+-----------------------------
+- raylib (https://www.raylib.com/), compiled into press.wasm: zlib/libpng
+  licence, Copyright (c) 2013-2026 Ramon Santamaria (@raysan5).
+- Emscripten runtime (press.mjs and parts of press.wasm): MIT licence,
+  Copyright (c) 2010-2014 Emscripten authors.

@@ -1,0 +1,13 @@
+{
+  // Astro generates .astro/types.d.ts (content-collection and env types) but
+  // nothing picks it up without a tsconfig, which is why `astro check` reported
+  // implicit `any` on every collection entry.
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    // The Press runtime was written against these two flags.
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
+  },
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist", "node_modules", "public", "lab", "tmp"]
+}

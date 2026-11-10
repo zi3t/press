@@ -1,0 +1,801 @@
+/* Volume sections — phase 1 of the continuous-scroll rebuild.
+
+   Each of the five volumes is a full section of the one shell document: a hero
+   that holds the volume open for a viewport, the package-owned fixture content
+   below it, and a run-out of quiet space before the next volume's ground
+   begins. The background belongs to the section, so crossing a boundary changes
+   the page colour the way the reference does — by scrolling into it, not by
+   animating anything.
+
+   The 3D volume is not here yet: `.press-volume-figure` reserves the column the
+   scene will pose it into in phase 2. */
+
+/* The canvas draws *into* a section: the book belongs above that section's
+   ground and below its words. Paint the ground on the section itself, as the
+   reference does. The former negative-z `::before` ground depended on an
+   uncontained stacking layer; after a standalone page changed height, that
+   layer could remain visible across the next section and read as a white/light
+   sheet over the active book.
+
+   `.home-hero` remains the pinned canvas layer. The section backgrounds are
+   normal-flow paint below that positioned layer, while the stage and reading
+   content are explicitly lifted above it. This only applies to the assembled
+   document: this sheet is loaded only by the Press shell, so the other pages keep
+   their own backgrounds. */
+/* The catalogue and the volumes are two states of one document. Measured on the
+   reference: `/` is ~7 viewports whose address never changes however far it is
+   scrolled, and a picked book is a ~66-viewport document of every volume, built
+   from the same wrapper with the catalogue's own scroll contribution gone. So
+   the sections are not in the catalogue's scroll at all — the scene opens them
+   on a pick, a deep link or a popstate, never on a scroll.
+
+   `display: none` rather than a class on `.press-volumes` alone: no-JS gets the
+   plain assembled document, since only the scene ever sets `press-volumes-open`
+   and only the scene can pose a volume into a section. */
+.press-volumes {
+  display: none;
+  position: relative;
+  z-index: auto;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+
+.press-volumes-open .press-volumes {
+  display: block;
+}
+
+.press-startup-fallback .press-volume-section[hidden] {
+  display: none !important;
+}
+
+.press-startup-fallback:not(.press-volumes-open) .signature-section {
+  position: relative;
+  inset: auto;
+  display: grid;
+  height: auto;
+  min-height: 100svh;
+  box-sizing: border-box;
+  background: #000000;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  margin-top: 0;
+  padding: 48px 24px;
+  opacity: 1 !important;
+  visibility: visible;
+  overflow: visible;
+}
+
+.press-startup-fallback:not(.press-volumes-open) .signature-section .signature-row {
+  width: min(100%, 420px);
+  height: auto;
+  aspect-ratio: 22 / 30;
+  transform: none !important;
+}
+
+.press-startup-fallback .press-film-poster {
+  background-image: var(--press-film-artwork);
+}
+
+/* Displaying the route document replaces the collapsed catalogue hero. Chrome
+   must not compensate that mode switch by choosing the newly visible detail
+   column as a scroll anchor; the route controller owns the selected section's
+   exact scroll position. */
+html[data-press-renderer="clean-room"].press-volumes-open,
+html[data-press-renderer="clean-room"].press-volumes-open body,
+html[data-press-renderer="clean-room"].press-volumes-open .press-volumes {
+  overflow-anchor: none;
+}
+
+/* The hero is one viewport of in-flow height the volumes document has no use
+   for — it only stays in the DOM, pinned, because it holds the canvas that
+   draws the volumes. Taking its height away starts volume one at offset 0, the
+   way the reference's book document opens on the book you picked rather than on
+   a viewport of catalogue. Everything in the hero other than `.press-catalog`
+   is already `display: none` under the press layout, so letting it overflow
+   lets exactly the canvas through and nothing else. */
+.press-volumes-open .home-hero {
+  z-index: 1;
+  height: 0;
+  min-height: 0;
+  overflow: visible;
+}
+
+.press-volumes-open .press-catalog {
+  position: fixed;
+  inset: 0;
+  height: 100svh;
+  /* `perspective` establishes a containing block for fixed descendants. The
+     catalogue's parent intentionally collapses to zero in a volume route, so
+     keeping it would make the canvas and left controls travel with the page.
+     The route scene is viewport-bound instead. */
+  perspective: none;
+}
+
+/* The rail and Back control are relocated by the scene to the end of `main`.
+   This layer paints above volume content while the scene canvas remains below
+   it, so fixed controls are both visible and genuinely clickable. */
+.press-route-controls {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  pointer-events: none;
+}
+
+.press-route-controls :is(.press-rail, .press-back) {
+  pointer-events: auto;
+}
+
+/* The terminal journey belongs to the catalogue: its panels are revealed by
+   scroll progress through a range the volumes document does not have, so
+   leaving them in would only park them at rest — invisible, inert, and in the
+   case of the footer a fixed element in the closing panel's ink floating over
+   every volume. The way out of a volume is the fixed masthead, which is the
+   reference's arrangement too: a persistent header, no page furniture. */
+.press-volumes-open .home-section,
+.press-volumes-open .press-signal-section,
+.press-volumes-open .home-closing,
+.press-volumes-open .home-footer {
+  display: none;
+}
+
+/* The hero must stay transparent so each volume section can paint behind its
+   live book. `.home-page` is the body itself, though: making both selectors
+   transparent exposes the browser's white canvas in catalogue mode. Keep the
+   measured Stripe Press rest ground (`#000000`) on the body and only clear the
+   pinned hero. Section backgrounds remain direct, opaque paint above it. */
+.home-page {
+  background: var(--press-stage);
+}
+
+.home-hero {
+  background: transparent;
+}
+
+.press-volume-section {
+  --press-volume-bg: var(--press-stage);
+  --press-volume-ink: var(--press-white);
+  position: relative;
+  z-index: auto;
+  padding-bottom: 46svh;
+  background: var(--press-volume-bg);
+  color: var(--press-volume-ink);
+}
+
+html[data-press-renderer="clean-room"] .press-volume-section--signal,
+.press-volume-section--signal {
+  --press-volume-bg: #000000;
+  --press-volume-ink: #ffffff;
+}
+
+.press-signal-note {
+  max-width: 38ch;
+  margin-top: 2rem;
+  font: 14px/1.6 var(--mono);
+  opacity: .72;
+}
+
+.press-startup-fallback:not(.press-volumes-open) .press-signal-section {
+  position: relative;
+  inset: auto;
+  display: block;
+  width: 100vw;
+  height: 100svh;
+  margin-inline: calc(50% - 50vw);
+  background: #000000;
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-press-renderer="clean-room"] .press-signal-detail :is(.press-volume-figure-track, .press-volume-figure) {
+    display: block;
+    min-height: 60svh;
+  }
+}
+
+/* Positioned above the pinned hero, so the words paint over the canvas while
+   the transparent figure column still reveals the live volume. */
+.press-volume-stage {
+  position: relative;
+  z-index: 2;
+}
+
+.press-volume-section--film {
+  --press-volume-bg: #000000;
+  --press-volume-ink: #ffffff;
+  min-height: 100svh;
+  padding-bottom: 15svh;
+}
+
+.press-film-detail {
+  position: relative;
+  z-index: 2;
+  display: block;
+  min-height: 100svh;
+  padding: 0;
+}
+
+html[data-press-renderer="clean-room"] .press-film-detail .press-volume-stage {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 0;
+  min-height: 100svh;
+  padding: 0;
+  overflow: hidden;
+  background: #000000;
+}
+
+html[data-press-renderer="clean-room"] .press-film-detail :is(.press-volume-figure-track, .press-volume-figure, .press-volume-detail) {
+  display: block;
+  position: relative;
+  top: auto;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  cursor: default;
+}
+
+.press-film-art {
+  width: 100%;
+  height: 100svh;
+  background: linear-gradient(0deg, #000000 0%, transparent 65%), var(--press-film-artwork) center 40% / cover no-repeat;
+  opacity: 0.42;
+}
+
+.press-film-detail .press-volume-copy {
+  position: absolute;
+  inset: auto 12vw 12vh;
+  z-index: 1;
+  color: #ffffff;
+}
+
+html[data-press-renderer="clean-room"] .press-film-detail .press-volume-title {
+  font: 500 clamp(60px, 10vw, 160px)/0.95 var(--home-serif);
+}
+
+.press-film-detail .press-volume-excerpt {
+  max-width: 46ch;
+}
+
+.press-catalogue-returning :is(.press-signal-section, .home-closing, .home-footer) {
+  visibility: hidden !important;
+}
+
+.press-film-detail h2 {
+  font: 500 clamp(40px, 5vw, 76px)/1 var(--home-serif);
+  letter-spacing: -0.04em;
+}
+
+.press-film-detail p {
+  max-width: 42ch;
+  font-size: clamp(17px, 1.4vw, 22px);
+  line-height: 1.6;
+}
+
+.press-film-detail a {
+  color: inherit;
+  text-underline-offset: 0.2em;
+}
+
+.press-about-dialog {
+  width: min(640px, calc(100vw - 40px));
+  max-height: calc(100svh - 40px);
+  overflow-y: auto;
+  padding: clamp(24px, 5vw, 56px);
+  border: 0;
+  background: #ffffff;
+  color: #000000;
+  font: 18px/1.6 var(--home-serif);
+}
+
+.press-about-dialog::backdrop {
+  background: rgb(0 0 0 / 65%);
+}
+
+.press-about-dialog a {
+  color: inherit;
+}
+
+.press-about-dialog button {
+  padding: 8px 16px;
+  border: 1px solid currentColor;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 899px) {
+  html[data-press-renderer="clean-room"] .press-film-detail .press-volume-stage {
+    grid-template-columns: 1fr;
+    padding: 110px 48px 60px 64px;
+  }
+
+  .press-film-art {
+    max-width: 320px;
+    margin-inline: auto;
+  }
+}
+
+/* The hero stays pinned under every section, so its catalogue would keep
+   claiming the pointer over a section's figure column and margins. The rail and
+   the help marker are exceptions: the reference keeps both on screen inside a
+   book — its index and its "?" sit in the same left margin there as on the
+   catalogue — so they stay reachable rather than becoming catalogue-only. The
+   shelf's own book links do not: they are covered by the section, and the scene
+   marks them inert so they leave the tab order with the pointer. */
+.press-in-volumes .press-catalog {
+  pointer-events: none;
+}
+
+.press-in-volumes .press-rail,
+.press-in-volumes .press-help,
+.press-in-volumes .press-back {
+  pointer-events: auto;
+}
+
+/* The way out of a volume, sitting directly above the index the way the
+   reference's does. It exists only in the volumes document — on the catalogue
+   there is nothing to go back to — and `display: none` keeps it out of the tab
+   order there rather than leaving an invisible stop. */
+.press-back {
+  position: absolute;
+  z-index: 61;
+  top: calc(50svh - 147.75px);
+  left: calc(13px + 1vw);
+  display: none;
+  align-items: center;
+  padding: 0 0 8px;
+  border: 0;
+  background: none;
+  /* The button sits in the pinned hero, below the sections, so it cannot inherit
+     the section's ink — the scene publishes the active volume's ink here. */
+  color: var(--press-active-ink, var(--press-white));
+  cursor: pointer;
+}
+
+.press-volumes-open .press-back {
+  display: flex;
+  position: fixed;
+  z-index: 71;
+}
+
+/* The index is route navigation, not catalogue furniture. Keep it in the
+   viewport at every route width (including the narrow portrait frame), above
+   the pinned canvas and independently hit-testable from its inert catalogue
+   parent. The desktop measurements remain the reference calibration. */
+.press-volumes-open .press-rail {
+  position: fixed;
+  z-index: 70;
+  display: block;
+  pointer-events: auto;
+}
+
+/* Stripe's menu is one themed control cluster: every product publishes a
+   foreground color and the indicators, return control, and About marker all
+   consume it together. Keep catalogue mode white, then follow the active
+   volume ink as the marked section changes. */
+.press-volumes-open .press-rail,
+.press-volumes-open .press-back,
+.press-volumes-open .press-help {
+  color: var(--press-active-ink, var(--press-white));
+  transition: color 260ms var(--press-ease-shift, ease);
+}
+
+.press-volumes-open .press-help:hover,
+.press-volumes-open .press-help:focus-visible {
+  color: var(--press-active-ink, var(--press-white));
+}
+
+/* The catalogue lockup owns the landing page. A book route keeps the name and
+   mark as its quiet masthead, but drops the landing-only progress tagline. */
+
+.press-volumes-open .home-nav a,
+.press-volumes-open .home-masthead .home-brand,
+.press-volumes-open .home-masthead .brand-mark {
+  color: var(--press-active-ink, var(--press-white));
+}
+
+.press-back svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin-right: 16px;
+  opacity: 1;
+}
+
+.press-back-label {
+  display: none;
+  color: inherit;
+  font: 600 15px/1 var(--home-serif);
+  white-space: nowrap;
+  opacity: 0;
+  user-select: none;
+}
+
+.press-back:hover .press-back-label,
+.press-back:focus-visible .press-back-label {
+  display: block;
+  animation: press-menu-label-reveal 200ms ease forwards;
+}
+
+.press-back:focus-visible {
+  outline: none;
+}
+
+.press-volume-section--surfaces {
+  --press-volume-bg: var(--press-surfaces);
+  --press-volume-ink: var(--press-surfaces-ink);
+}
+
+.press-volume-section--geometry {
+  --press-volume-bg: var(--press-geometry);
+  --press-volume-ink: var(--press-geometry-ink);
+}
+
+.press-volume-section--interaction {
+  --press-volume-bg: var(--press-interaction);
+  --press-volume-ink: var(--press-interaction-ink);
+}
+
+.press-volume-section--routing {
+  --press-volume-bg: var(--press-routing);
+  --press-volume-ink: var(--press-routing-ink);
+}
+
+.press-volume-section--integration {
+  --press-volume-bg: var(--press-integration);
+  --press-volume-ink: var(--press-integration-ink);
+}
+
+/* A volume is one continuous two-column section. The left grid track persists
+   for the complete height of the fixture so its sticky figure can carry the
+   canvas book beside every paragraph. Keeping the fixture inside the
+   right track is the important part: a sibling content block would expand back
+   across the book as soon as the one-viewport introduction had scrolled away. */
+.press-volume-stage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  min-height: 100svh;
+  padding-inline: clamp(24px, 4vw, 64px);
+  gap: clamp(24px, 4vw, 64px);
+}
+
+/* The renderer reads this sticky rectangle on every layout pass. Before the
+   section reaches its resting position the rectangle rises with the section;
+   through the reading body it stays centred in the left track; and at the end
+   it leaves with its own section. That is the reference's book handoff rather
+   than a second fixed coordinate shared by every volume. */
+.press-volume-figure-track {
+  position: relative;
+  min-width: 0;
+  min-height: 100svh;
+}
+
+.press-volume-figure {
+  position: sticky;
+  top: 20svh;
+  height: 60svh;
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.press-volume-copy {
+  min-width: 0;
+}
+
+.press-volume-detail {
+  box-sizing: border-box;
+  min-height: 100svh;
+}
+
+.press-cover-dragging,
+.press-cover-dragging .press-volume-figure {
+  cursor: grabbing;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce), (max-width: 900px) {
+  .press-volume-figure {
+    cursor: default;
+  }
+}
+
+.press-volume-title {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: clamp(30px, 3.4vw, 46px);
+  font-weight: 600;
+  letter-spacing: -0.032em;
+  line-height: 1.06;
+}
+
+.press-volume-summary {
+  max-width: 44ch;
+  margin: 0.9em 0 0;
+  font-size: clamp(15px, 1.15vw, 18px);
+  line-height: 1.62;
+  opacity: 0.82;
+}
+
+.press-volume-kicker,
+.press-volume-excerpt,
+.press-volume-meta {
+  display: none;
+}
+
+/* The selected cover's authored cloth continues behind its route content. */
+html[data-press-renderer="clean-room"] .press-volume-section--surfaces {
+  --press-volume-bg: #aaaaaa;
+  --press-volume-ink: #000000;
+}
+
+html[data-press-renderer="clean-room"] .press-volume-section--geometry {
+  --press-volume-bg: #aaaaaa;
+  --press-volume-ink: #000000;
+}
+
+html[data-press-renderer="clean-room"] .press-volume-section--interaction {
+  --press-volume-bg: #555555;
+  --press-volume-ink: #ffffff;
+}
+
+html[data-press-renderer="clean-room"] .press-volume-section--routing {
+  --press-volume-bg: #555555;
+  --press-volume-ink: #ffffff;
+}
+
+html[data-press-renderer="clean-room"] .press-volume-section--integration {
+  --press-volume-bg: #555555;
+  --press-volume-ink: #ffffff;
+}
+
+html[data-press-renderer="clean-room"] .press-volume-kicker {
+  display: block;
+  margin: 0 0 0.75rem;
+  font: 700 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.14em;
+}
+
+html[data-press-renderer="clean-room"] .press-volume-excerpt {
+  display: block;
+  max-width: 34rem;
+  margin: clamp(1.75rem, 4vh, 2.5rem) 0 0;
+  font-family: var(--mono);
+  font-size: clamp(16px, 1.18vw, 18px);
+  font-weight: 600;
+  line-height: 1.42;
+}
+
+html[data-press-renderer="clean-room"] .press-volume-excerpt a {
+  color: inherit;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+html[data-press-renderer="clean-room"] .press-volume-meta {
+  display: grid;
+  max-width: 34rem;
+  margin: clamp(1.75rem, 4vh, 2.75rem) 0 0;
+  border-top: 1px solid currentColor;
+}
+
+html[data-press-renderer="clean-room"] .press-volume-meta div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid currentColor;
+}
+
+html[data-press-renderer="clean-room"] .press-volume-meta :is(dt, dd) {
+  margin: 0;
+  font: 700 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.08em;
+}
+
+@media (min-width: 901px) {
+  html[data-press-renderer="clean-room"] .press-volume-stage {
+    grid-template-columns: minmax(0, 1.23fr) minmax(0, 1fr);
+  }
+
+  html[data-press-renderer="clean-room"] .press-volume-figure {
+    align-self: start;
+  }
+
+  html[data-press-renderer="clean-room"] .press-volume-detail {
+    padding-top: 21.1svh;
+  }
+
+  html[data-press-renderer="clean-room"] .press-volume-kicker {
+    display: none;
+  }
+
+  html[data-press-renderer="clean-room"] .press-volume-title {
+    max-width: 17ch;
+    min-height: 2.12em;
+    font-size: clamp(30px, 2.15vw, 34px);
+  }
+
+  html[data-press-renderer="clean-room"] .press-volume-summary {
+    max-width: 31ch;
+    margin-top: 0.45em;
+    font-family: var(--mono);
+    font-size: clamp(16px, 1.25vw, 19px);
+    font-style: normal;
+    font-weight: 600;
+    line-height: 1.35;
+    opacity: 1;
+  }
+
+  html[data-press-renderer="clean-room"] .press-volume-excerpt {
+    margin-top: 3rem;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+}
+
+/* Package-owned fixture content, given the section's colours. */
+.press-volume-content {
+  width: 100%;
+  max-width: 34rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* A fixture's supporting copy, set in the same measure and ink as the rest of
+   the volume rather than dressed as page chrome. */
+.press-brief {
+  max-width: 56ch;
+  margin: 0 0 clamp(3rem, 6vh, 5rem);
+  font-size: clamp(15px, 1.15vw, 18px);
+  line-height: 1.62;
+}
+
+.press-brief .section-label {
+  margin: 0 0 0.5em;
+  font-size: 0.78em;
+  letter-spacing: 0.14em;
+}
+
+.press-brief h2 {
+  margin: 0 0 0.7em;
+  font-family: var(--mono);
+  font-size: clamp(24px, 2.4vw, 34px);
+  font-weight: 600;
+  letter-spacing: -0.028em;
+  line-height: 1.1;
+}
+
+.press-brief p {
+  margin: 0 0 1em;
+}
+
+.press-brief p:last-child {
+  margin-bottom: 0;
+}
+
+/* A volume section is one ground and one ink, the way the reference's book
+   pages are. The five fixtures use different themes, so their colours can
+   arrive wrong here — measured against the section grounds at ratios as
+   low as 1.11:1, which is body copy you cannot read. Patching five stylesheets
+   would leave the next fixture broken again, so the section republishes
+   the palette and the content inherits it in tiers.
+
+   `!important` deliberately keeps fixture internals subordinate to the selected
+   cover palette, and
+   the scope is narrow — `.press-volume-content` exists only in the assembled
+   document. `.project-visual` is exempt throughout: those are authored diagrams
+   with their own palettes, not page chrome.
+   Hierarchy is carried by size, weight and letter-spacing — never by fading the
+   ink. That is not a style preference: a muted tier is the ink blended toward
+   its own ground, so its contrast is bounded well under the palette's, and no
+   volume ground here has the headroom for it. Pure black at 72% over the notes
+   tan measures 4.25:1, still short of 4.5. Full ink everywhere means each
+   section only has to clear the bar once, in its palette. */
+.press-volume-content,
+.press-volume-content *:not(.project-visual):not(.project-visual *) {
+  color: var(--press-volume-ink) !important;
+}
+
+/* The reference's book pages carry no panels: one ground, thin rules, ink type.
+   Fixture cards must not punch holes in the volume's colour. */
+.press-volume-content *:not(.project-visual):not(.project-visual *) {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+.press-volume-content *:not(.project-visual):not(.project-visual *) {
+  border-color: color-mix(in srgb, var(--press-volume-ink) 24%, transparent) !important;
+}
+
+/* Links and actions read as the reference's do: ink, ruled, no fill. */
+.press-volume-content a {
+  color: inherit;
+  text-decoration-color: color-mix(in srgb, var(--press-volume-ink) 45%, transparent);
+  text-underline-offset: 0.22em;
+}
+
+.press-volume-content :where(button, .button, .cta, [role="button"]) {
+  border: 1px solid color-mix(in srgb, var(--press-volume-ink) 34%, transparent) !important;
+  border-radius: 0 !important;
+}
+
+/* No volume is posed into the figure under reduced motion — the canvas cannot
+   follow the scroll there — so the column would only be a held-open gap. */
+@media (prefers-reduced-motion: reduce) {
+  .press-volume-figure-track,
+  .press-volume-figure {
+    display: none;
+  }
+
+  .press-volume-stage {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-block: 12svh 6svh;
+  }
+
+  .press-volume-detail {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .press-volumes-open .press-back {
+    top: 194px;
+    left: 14px;
+  }
+
+  .press-volumes-open .press-rail {
+    top: 225px;
+    left: 18px;
+  }
+
+  .press-volume-stage {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-block: 18svh 6svh;
+  }
+
+  .press-volume-figure-track {
+    min-height: auto;
+  }
+
+  .press-volume-figure {
+    position: relative;
+    top: auto;
+    height: 42svh;
+  }
+
+  .press-volume-section {
+    padding-bottom: 24svh;
+  }
+
+  html[data-press-renderer="clean-room"] .press-volume-detail {
+    min-height: auto;
+    padding-top: 22px;
+    padding-inline: 30px;
+  }
+
+  html[data-press-renderer="clean-room"] .press-volume-kicker {
+    display: none;
+  }
+
+  html[data-press-renderer="clean-room"] .press-volume-title {
+    font-size: clamp(30px, 10vw, 40px);
+  }
+
+  html[data-press-renderer="clean-room"] .press-volume-summary {
+    margin-top: 0.45em;
+    font-family: var(--mono);
+    font-size: 17px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 1.4;
+    opacity: 1;
+  }
+
+  html[data-press-renderer="clean-room"] .press-volume-excerpt {
+    margin-top: 2.8rem;
+  }
+}
